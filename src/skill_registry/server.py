@@ -90,7 +90,7 @@ async def discover_remote_skills() -> str:
             catalog.append({
                 "repo_source": repo_str,
                 "status": "UNSUPPORTED",
-                "message": "Bulk discovery via skill_index.json is no longer supported. Please use tools like `gh skill list/install` or `npx skills add` to browse and install skills from entire repositories."
+                "message": f"Bulk discovery via skill_index.json is no longer supported. You can search for skills across GitHub using `gh skill search --owner {parsed['org']}`. Once you find a skill, please use tools like `gh skill install -d {LOCAL_SKILLS_DIR}` or `npx skills add` to install it."
             })
 
     return json.dumps(catalog, indent=2)

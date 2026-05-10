@@ -48,6 +48,7 @@ async def test_discover_remote_skills(mock_exists, mock_file, mock_installed, mo
     assert result[0]["repo_source"] == "org/repo@v1"
     assert result[0]["status"] == "UNSUPPORTED"
     assert "Bulk discovery via skill_index.json is no longer supported" in result[0]["message"]
+    assert "gh skill search --owner org" in result[0]["message"]
 
     # Check standalone parsing
     assert result[1]["skill_name"] == "stand.md"
