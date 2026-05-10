@@ -11,7 +11,7 @@ mcp = FastMCP("GlobalSkillRegistry")
 
 # Environment Variables Configuration
 CONFIG_PATH = os.getenv("SKILL_REGISTRY_YAML", "remote_skills.yaml")
-LOCAL_SKILLS_DIR = os.getenv("LOCAL_SKILLS_DIR", "./local_skills")
+LOCAL_SKILLS_DIR = os.getenv("LOCAL_SKILLS_DIR", ".agents/skills")
 
 def ensure_local_dir():
     """Ensure local skills directory exists."""
@@ -41,7 +41,13 @@ def parse_repo_string(repo_str: str) -> dict:
 def get_installed_skills() -> List[str]:
     """Returns a list of markdown filenames currently in the local skills directory."""
     ensure_local_dir()
-    return [f.name for f in Path(LOCAL_SKILLS_DIR).iterdir() if f.is_file() and f.suffix == '.md']
+    installed = []
+    for f in Path(LOCAL_SKILLS_DIR).iterdir():
+        if f.is_file() and f.suffix == '.md':
+            installed.append(f.name)
+        elif f.is_dir() and (f / 'SKILL.md').is_file():
+            installed.append(f.name)
+    return installed
 
 @mcp.tool()
 async def discover_remote_skills() -> str:
@@ -79,27 +85,13 @@ async def discover_remote_skills() -> str:
                 })
                 continue
 
-            # Otherwise, fetch the skill_index.json at the repo root
-            index_url = f"{parsed['raw_base_url']}/skill_index.json"
-            try:
-                response = await client.get(index_url)
-                if response.status_code == 200:
-                    index_data = response.json()
-                    for skill in index_data.get('skills', []):
-                        # Prefix skill name to prevent naming collisions
-                        namespaced_skill = f"{parsed['repo']}_{skill['name']}"
-                        status = "INSTALLED" if f"{namespaced_skill}.md" in installed else "AVAILABLE"
-
-                        catalog.append({
-                            "skill_name": namespaced_skill,
-                            "original_name": skill['name'],
-                            "description": skill.get('description', 'No description'),
-                            "repo_source": repo_str,
-                            "file_path": skill['path'],
-                            "status": status
-                        })
-            except Exception as e:
-                catalog.append({"error": f"Failed to fetch index for {repo_str}: {str(e)}"})
+            # skill_index.json parsing is deprecated
+            # Instruct the agent/user to use third-party CLI tools for full repositories
+            catalog.append({
+                "repo_source": repo_str,
+                "status": "UNSUPPORTED",
+                "message": "Bulk discovery via skill_index.json is no longer supported. Please use tools like `gh skill list/install` or `npx skills add` to browse and install skills from entire repositories."
+            })
 
     return json.dumps(catalog, indent=2)
 

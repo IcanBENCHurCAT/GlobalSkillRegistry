@@ -39,32 +39,19 @@ async def test_discover_remote_skills(mock_exists, mock_file, mock_installed, mo
     mock_exists.return_value = True
     mock_installed.return_value = ["repo_known_skill.md"] # One skill is already installed
 
-    # Mock HTTP response for skill_index.json
-    from unittest.mock import MagicMock
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "skills": [
-            {"name": "known_skill", "path": "skills/known.md", "description": "Test"},
-            {"name": "new_skill", "path": "skills/new.md", "description": "Test 2"}
-        ]
-    }
-    mock_get.return_value = mock_response
-
     result_str = await discover_remote_skills()
     result = json.loads(result_str)
 
-    assert len(result) == 3 # 2 from index, 1 standalone
+    assert len(result) == 2 # 1 unsupported index, 1 standalone
 
-    # Check index parsing and namespacing
-    assert result[0]["skill_name"] == "repo_known_skill"
-    assert result[0]["status"] == "INSTALLED"
-    assert result[1]["skill_name"] == "repo_new_skill"
-    assert result[1]["status"] == "AVAILABLE"
+    # Check unsupported message
+    assert result[0]["repo_source"] == "org/repo@v1"
+    assert result[0]["status"] == "UNSUPPORTED"
+    assert "Bulk discovery via skill_index.json is no longer supported" in result[0]["message"]
 
     # Check standalone parsing
-    assert result[2]["skill_name"] == "stand.md"
-    assert result[2]["type"] == "standalone"
+    assert result[1]["skill_name"] == "stand.md"
+    assert result[1]["type"] == "standalone"
 
 @patch("src.skill_registry.server.httpx.AsyncClient.get")
 @patch("builtins.open", new_callable=mock_open)
