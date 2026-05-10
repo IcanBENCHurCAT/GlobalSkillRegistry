@@ -1,10 +1,12 @@
 # Global MCP Skill Registry Server
 
-A Model Context Protocol (MCP) server that acts as a package manager for AI Agent Skills. It allows your agent to dynamically discover, fetch, and install remote Markdown (`.md`) skill definitions from designated Git repositories directly into its local execution environment.
+A Model Context Protocol (MCP) server that acts as an automated package manager for AI Agent Skills. It manages your agent's skill environment by automatically syncing remote Markdown (`.md`) skill definitions from designated Git repositories directly into your local execution environment upon startup.
 
 ## 🚀 Architecture Concept
 
-Instead of loading hundreds of tools dynamically, this server follows a Package Manager model. The agent uses this MCP server to browse a catalog (`discover_remote_skills`). When it needs a skill, it installs it locally (`install_remote_skill`). Your agent's core framework then naturally picks up the `.md` file from the local directory.
+Instead of forcing the agent to dynamically search for and install tools one by one during a conversation, this server operates on a declarative "Package Manager" manifest model.
+
+On server startup, it reads your `remote_skills.yaml` manifest and launches background synchronization tasks using standard third-party CLI tools (like `gh skill install`). The MCP server strictly handles the discovery and local installation of these semantic markdown skills. Your agent's core framework then natively scans the local filesystem to pick up the tools and interact with them.
 
 ## 📦 Installation
 
@@ -62,9 +64,9 @@ pytest tests/
 
 ## 📦 Skill Management Tools Integration
 
-While this MCP server allows on-demand fetching of specific `.md` files, we highly recommend integrating with standardized skill-management tools for bulk installation and updates from full repositories.
+This project relies on standardized skill-management tools for robust bulk installation and updates from full repositories. The MCP server will automatically execute these CLI commands for you in the background based on your manifest.
 
-You can browse and install skills interactively using the GitHub CLI or NPM:
+You can also browse and install skills manually/interactively using the GitHub CLI or NPM:
 
 ```bash
 # Using GitHub CLI (v2.90.0+)
@@ -100,7 +102,7 @@ For a repository to be compatible with tools like `gh skill install` or your age
 
 ## 📜 How it works (For the Agent)
 
-When the agent connects, it gets two tools:
-*   `discover_remote_skills`: Returns a JSON catalog of available remote Markdown skills. It checks `LOCAL_SKILLS_DIR` to report if a skill is `AVAILABLE` or already `INSTALLED`.
-    *Note: Bulk repository discovery using `skill_index.json` is deprecated. Please use dedicated package managers like `gh skill` or `npx skills` for full-repository discovery.*
-*   `install_remote_skill`: Downloads the target markdown file and writes it to the local skills directory using a namespaced filename to avoid collisions.
+Because the MCP server handles fetching and updating skills automatically in the background on startup, the local filesystem (`.agents/skills`) is the single source of truth for the active skill state.
+
+When the agent connects to the MCP server, it is provided with a single tool:
+*   `get_skill_sync_status`: Returns a message informing the agent that skills are synchronized in the background to the local `.agents/skills` directory, and that the agent should rely on its own native filesystem scanning capabilities to discover and utilize the available tools.
