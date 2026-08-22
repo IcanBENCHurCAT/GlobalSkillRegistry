@@ -14,7 +14,7 @@ idna==3.13
 iniconfig==2.3.0
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
-mcp==1.27.1
+mcp==1.28.1
 packaging==26.2
 playwright==1.58.0
 pluggy==1.6.0
